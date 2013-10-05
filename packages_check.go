@@ -46,19 +46,15 @@ func init() {
 
 			var pkg Results
 
-			if len(parts) > 1 {
+			if len(parts) == 3 {
 				pkg = valid.BeginTest("Checking package %s", parts[0])
+
+				check_package(url+"/"+parts[0], pkg)
 			} else {
-				pkg = valid.BeginTest("Checking package %d", pkgs)
+				valid.Fail("Invalid package on line %d", pkgs)
+
+				return
 			}
-
-			if len(parts) < 3 {
-				pkg.Fail("Not enough sections.")
-
-				continue
-			}
-
-			check_package(url+"/"+parts[0], pkg)
 
 			line, _, err = reader.ReadLine()
 		}
