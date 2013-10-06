@@ -15,7 +15,7 @@ func init() {
 	DefineCheck(func(url string, r Results) {
 		exists := r.BeginTest("Checking for .../packages.list")
 
-		res, err := http.Get(url + "/packages.list")
+		res, err := MustHttp200(url + "/packages.list")
 		if err != nil {
 			exists.Fail("Failed to get package list: %s", err.Error())
 
@@ -23,12 +23,6 @@ func init() {
 		}
 
 		defer res.Body.Close()
-
-		if res.StatusCode != 200 {
-			exists.Fail("Failed to get package list: HTTP Status code %d", res.StatusCode)
-
-			return
-		}
 
 		exists.Success()
 
@@ -64,7 +58,7 @@ func init() {
 }
 
 func check_package(url string, r Results) {
-	res, err := http.Get(url + "/details.pkg")
+	res, err := MustHttp200(url)
 	if err != nil {
 		r.Fail("Failed to get details.pkg: %s", err.Error())
 
@@ -72,12 +66,6 @@ func check_package(url string, r Results) {
 	}
 
 	defer res.Body.Close()
-
-	if res.StatusCode != 200 {
-		r.Fail("Failed to get details.pkg: HTTP Status %d", res.StatusCode)
-
-		return
-	}
 
 	reader := bufio.NewReader(res.Body)
 
@@ -130,41 +118,5 @@ func check_package(url string, r Results) {
 		check_files(url+"/startup", directives["Startup"], ".lua", r) &&
 		check_files(url+"/docs", directives["Documentation"], ".txt", r) {
 		r.Success()
-	}
-}
-
-func check_files(url string, files []string, extension string, r Results) bool {
-	for _, file := range files {
-		if strings.HasSuffix(file, "/") {
-			continue
-		}
-
-		file = file_name(file) + extension
-
-		res, err := http.Get(url + "/" + file)
-		if err != nil {
-			r.Fail("Could not get %s/%s: %s", url, file, err.Error())
-
-			return false
-		}
-
-		res.Body.Close()
-
-		if res.StatusCode != 200 {
-			r.Fail("Could not get %s/%s: HTTP Status %d", url, file, res.StatusCode)
-
-			return false
-		}
-
-	}
-
-	return true
-}
-
-func file_name(spec string) string {
-	if strings.Contains(spec, " => ") {
-		return strings.Split(spec, " => ")[0]
-	} else {
-		return spec
 	}
 }
